@@ -2,8 +2,10 @@ package main
 
 import (
 	//"fmt"
+
 	"hash/fnv"
 	"labMapReduce/mapreduce"
+	"strconv"
 
 	//"strconv"
 	"strings"
@@ -31,8 +33,11 @@ func mapFunc(input []byte) (result []mapreduce.KeyValue) {
 	//fmt.Printf("%v\n", words) //Para ajudar nos testes. Precisa da biblioteca fmt (acima comentada)
 
 	result = make([]mapreduce.KeyValue, 0)
+	var lower string
 
 	for _, word := range words {
+		lower = strings.ToLower(word)
+		result = append(result, mapreduce.KeyValue{Key: lower, Value: "1"})
 		//COMPLETAR ESSE CÓDIGO
 		//Basta colocar em result os itens <word,"1">
 		//Lembrando: word em minúsculo!
@@ -46,6 +51,19 @@ func mapFunc(input []byte) (result []mapreduce.KeyValue) {
 // reduceFunc is called for each merged array of KeyValue resulted from all map jobs.
 // It should return a similar array that summarizes all similar keys in the input.
 func reduceFunc(input []mapreduce.KeyValue) (result []mapreduce.KeyValue) {
+	var mapAux map[string]int = make(map[string]int)
+	for _, item := range input {
+		_, ok := mapAux[item.Key]
+		if ok {
+			mapAux[item.Key]++
+		} else {
+			mapAux[item.Key] = 1
+		}
+	}
+	result = make([]mapreduce.KeyValue, 0)
+	for key, value := range mapAux {
+		result = append(result, mapreduce.KeyValue{Key: key, Value: strconv.Itoa(value)})
+	}
 	// 	Maybe it's easier if you have an auxiliary structure:
 	//      var mapAux map[string]int = make(map[string]int)
 	//

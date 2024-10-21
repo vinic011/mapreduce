@@ -29,6 +29,8 @@ type Master struct {
 	idleWorkerChan   chan *RemoteWorker
 	failedWorkerChan chan *RemoteWorker
 
+	//failedOperationChan chan *Operation
+
 	///////////////////////////////
 	// ADD EXTRA PROPERTIES HERE //
 	///////////////////////////////
@@ -80,6 +82,17 @@ func (master *Master) handleFailingWorkers() {
 	/////////////////////////
 	// YOUR CODE GOES HERE //
 	/////////////////////////
+	for {
+		worker := <-master.failedWorkerChan
+		if worker != nil {
+			master.workersMutex.Lock()
+			delete(master.workers, worker.id)
+			master.totalWorkers--
+
+			master.workersMutex.Unlock()
+		}
+	}
+
 }
 
 // Handle a single connection until it's done, then closes it.
