@@ -29,7 +29,8 @@ type Master struct {
 	idleWorkerChan   chan *RemoteWorker
 	failedWorkerChan chan *RemoteWorker
 
-	//failedOperationChan chan *Operation
+	failedOperationChan chan *Operation
+	nSuccessOps         int
 
 	///////////////////////////////
 	// ADD EXTRA PROPERTIES HERE //
@@ -51,6 +52,8 @@ func newMaster(address string) (master *Master) {
 	master.idleWorkerChan = make(chan *RemoteWorker, IDLE_WORKER_BUFFER)
 	master.failedWorkerChan = make(chan *RemoteWorker, IDLE_WORKER_BUFFER)
 	master.totalWorkers = 0
+	master.failedOperationChan = make(chan *Operation, RETRY_OPERATION_BUFFER)
+	master.nSuccessOps = 0
 	return
 }
 

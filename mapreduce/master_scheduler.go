@@ -1,6 +1,7 @@
 package mapreduce
 
 import (
+	"fmt"
 	"log"
 	"sync"
 )
@@ -34,6 +35,26 @@ func (master *Master) schedule(task *Task, proc string, filePathChan chan string
 
 	wg.Wait()
 
+	// Rerun fails
+	for {
+		//fmt.Print("Rerunning failed operations\n", " counter: ", counter, " nOp ", master.nSuccessOps, "\n")
+		if counter == master.nSuccessOps {
+			fmt.Print("All operations completed\n")
+			master.nSuccessOps = 0
+			break
+		}
+		// isso bloqueia e trava
+		select {
+		case operation := <-master.failedOperationChan:
+			worker := <-master.idleWorkerChan
+			wg.Add(1)
+			go master.runOperation(worker, operation, &wg)
+		default:
+		}
+
+	}
+	wg.Wait()
+
 	log.Printf("%vx %v operations completed\n", counter, proc)
 	return counter
 }
@@ -58,8 +79,14 @@ func (master *Master) runOperation(remoteWorker *RemoteWorker, operation *Operat
 		log.Printf("Operation %v '%v' Failed. Error: %v\n", operation.proc, operation.id, err)
 		wg.Done()
 		master.failedWorkerChan <- remoteWorker
+		// handle fails
+		master.failedOperationChan <- operation
 	} else {
 		wg.Done()
 		master.idleWorkerChan <- remoteWorker
+		//
+		master.workersMutex.Lock()
+		master.nSuccessOps++
+		master.workersMutex.Unlock()
 	}
 }
